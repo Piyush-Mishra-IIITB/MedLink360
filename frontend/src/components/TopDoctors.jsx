@@ -18,7 +18,7 @@ function TopDoctors() {
             <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mt-8 w-full'>
                 
                 {doctors.slice(0,10).map((item,index)=>(
-                    <div onClick={()=>navigate(`/appointment/${item._id}`)} key={index} className='border rounded-lg p-4 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer'>
+                    <div onClick={()=>{navigate(`/appointment/${item._id}`);scrollTo(0,0)}} key={index} className='border rounded-lg p-4 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer'>
                         
                         <img 
                             className='w-full h-48 object-cover rounded-md'
