@@ -1,38 +1,44 @@
 import { createContext, useEffect, useState } from "react";
-import { doctors } from "../assets/assets_frontend/assets";
 import axios from 'axios'
-import {toast} from 'react-toastify'
-export const AppContext=createContext();
-const AppContextProvider= (props)=>{
-    const backendURL=import.meta.env.VITE_BACKEND_URL;
-    const currencySymbol='$';
-    const[doctors,setDoctors] =useState([]);
-    const getDoctorsData= async()=>{
-        try{
-           const {data}=await axios.get(backendURL + '/api/doctor/list');
-           if(data.success){
-               setDoctors(data.doctors);
+import { toast } from 'react-toastify'
 
-           }else{
-            toast.error(data.message);
-           }
-        }catch(error){
-          console.log(error.message);
-         toast.error(error.message);
+export const AppContext = createContext();
+
+const AppContextProvider = (props) => {
+
+    const backendURL = import.meta.env.VITE_BACKEND_URL;
+    const currencySymbol = '$';
+
+    const [doctors, setDoctors] = useState([]);
+
+    // ⭐ FIXED AUTH STATE
+    const [token, setToken] = useState(() => localStorage.getItem('token'));
+
+    const getDoctorsData = async () => {
+        try {
+            const { data } = await axios.get(backendURL + '/api/doctor/list');
+            if (data.success) setDoctors(data.doctors);
+            else toast.error(data.message);
+        } catch (error) {
+            toast.error(error.message);
         }
-    }
-    useEffect(()=>{
-      getDoctorsData();
-    },[]);
-    const value={
-     doctors,
-     currencySymbol
-    }
+    };
 
-    return(
+    useEffect(() => { getDoctorsData(); }, []);
+
+    // ⭐ KEEP STORAGE IN SYNC
+    useEffect(() => {
+        if (token) localStorage.setItem("token", token);
+        else localStorage.removeItem("token");
+    }, [token]);
+
+    const value = { doctors, currencySymbol, token, setToken, backendURL };
+
+    return (
         <AppContext.Provider value={value}>
             {props.children}
         </AppContext.Provider>
-    )
-}
+    );
+};
+
 export default AppContextProvider;
