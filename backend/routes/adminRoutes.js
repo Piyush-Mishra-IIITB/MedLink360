@@ -1,10 +1,13 @@
 import e from "express";
-import { addDoctor,loginAdmin } from "../contollers/adminController.js";
+import { addDoctor,allDoctor,loginAdmin } from "../contollers/adminController.js";
 import upload from "../middlewares/multer.js";
 import authAdmin from "../middlewares/authAdmin.js";
+import { changeAvailability } from "../contollers/doctorController.js";
 
 const adminRouter =e.Router();
 
 adminRouter.post('/add-doctor',authAdmin,upload.single('image'),addDoctor);
 adminRouter.post('/login',loginAdmin);
+adminRouter.get('/all-doctor',authAdmin,allDoctor);
+adminRouter.patch('/change-availability/:id',authAdmin,changeAvailability);
 export default adminRouter;

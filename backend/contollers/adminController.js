@@ -18,7 +18,7 @@ const addDoctor=async(req,res)=>{
     if(password.length<8){
         return res.json({success:false,message:"please enter a Strong password"});
     }
-      const slat= await bcrypt.genSalt(10);
+      const salt= await bcrypt.genSalt(10);
       const hashedPass= await bcrypt.hash(password,salt);
 
       const imageUpload=await cloudinary.uploader.upload(imageFile.path,{resource_type:"image"});
@@ -32,6 +32,7 @@ const addDoctor=async(req,res)=>{
         speciality,
         degree,
         experience,
+        about,
         fees,
         address:JSON.parse(address),
         date:Date.now()
@@ -61,5 +62,16 @@ const loginAdmin=async(req,res)=>{
       res.json({success:false,message:"some error occured"});
     }
 }
+// get All Doctors
+const allDoctor=async(req,res)=>{
+ try{
+    const doctors=await doctorModel.find({}).select('-password');
+    res.json({success:true,doctors});
+ }catch(error){
+   console.log(error);
+   res.json({success:false,message:error.message});
+ }
 
-export {addDoctor,loginAdmin}
+}
+
+export {addDoctor,loginAdmin,allDoctor}
