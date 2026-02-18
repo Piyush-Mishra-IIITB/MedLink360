@@ -53,7 +53,7 @@ useEffect(()=>{
  }
 },[token]);
 
-    const value = { doctors, currencySymbol, token, setToken, backendURL,userData,setUserData,loadUserProfileData };
+    const value = { doctors, currencySymbol, token, setToken, backendURL,userData,setUserData,loadUserProfileData,getDoctorsData };
 
     return (
         <AppContext.Provider value={value}>
