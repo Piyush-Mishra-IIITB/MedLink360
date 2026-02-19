@@ -161,14 +161,14 @@ function MyAppointments() {
             <div className="flex md:flex-col gap-3 justify-center">
 
               {/* Paid */}
-              {!item.cancelled && item.payment && (
+              {!item.cancelled && item.payment && !item.isCompleted && (
                 <button className="px-4 py-2 rounded-full bg-green-100 text-green-700">
                   Paid
                 </button>
               )}
 
               {/* Pay + Cancel */}
-              {!item.cancelled && !item.payment && (
+              {!item.cancelled && !item.payment && !item.isCompleted && (
                 <>
                   <button
                     onClick={() => appointmentRazorpay(item._id)}
@@ -187,11 +187,12 @@ function MyAppointments() {
               )}
 
               {/* Cancelled */}
-              {item.cancelled && (
+              {item.cancelled && !item.isCompleted  && (
                 <button className="px-4 py-2 rounded-full bg-red-100 text-red-600">
                   Appointment Cancelled
                 </button>
               )}
+              {item.isCompleted && <button>Completed</button>}
 
             </div>
           </div>
