@@ -11,6 +11,7 @@ export const AdminContextProvider = ({ children }) => {
   const [aToken, setAToken] = useState(localStorage.getItem("aToken") || "");
   const [doctors, setDoctors] = useState([]);
   const[appointments,setAppointments]=useState([]);
+  const [dashData,setDashdata]=useState(false);
   // stable function
   const getAllDoctors = useCallback(async () => {
     try {
@@ -66,7 +67,8 @@ const getAllAppointments=async()=>{
      const {data}=await axios.post(backendURL + '/api/admin/cancel-appointment',{appointmentId},{headers:{aToken}});
      if(data.success){
       toast.success(data.message);
-      getAllAppointments();
+      await getAllAppointments();
+      await getDashdata();
 
      }else{
       toast.error(data.message);
@@ -75,6 +77,21 @@ const getAllAppointments=async()=>{
       toast.error(error.message);
     }
   }
+ // get dash data
+ const getDashdata=async()=>{
+  try{
+     const {data}=await axios.get(backendURL + '/api/admin/dashboard',{headers:{aToken}});
+     if(data.success){
+      setDashdata(data.dashData);
+
+     }
+     else{
+      toast.error(data.message);
+     }
+  }catch(error){
+      toast.error(error.message);
+  }
+ }
   // stable value
   const value = useMemo(() => ({
     backendURL,
@@ -86,8 +103,10 @@ const getAllAppointments=async()=>{
     setAppointments,
     changeAvailability,
     getAllAppointments,
-    cancelAppointment
-  }), [aToken, doctors,cancelAppointment, getAllDoctors,changeAvailability,getAllAppointments]);
+    cancelAppointment,
+    getDashdata,
+    dashData
+  }), [aToken,dashData, doctors,cancelAppointment, getAllDoctors,changeAvailability,getAllAppointments,getDashdata]);
 
   return (
     <AdminContext.Provider value={value}>
