@@ -2,10 +2,11 @@ import React, { useContext } from "react";
 import { AdminContext } from "../context/AdminContext";
 import { NavLink } from "react-router-dom";
 import { assets } from "../assets/assets_admin/assets";
+import { DoctorContext } from "../context/DoctorContext";
 
 function Sidebar() {
   const { aToken } = useContext(AdminContext);
-
+  const {dToken}=useContext(DoctorContext);
   const linkClass =
     "flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-medium transition-all duration-200 hover:bg-primary/10 hover:text-primary";
 
@@ -56,6 +57,41 @@ function Sidebar() {
           >
             <img src={assets.people_icon} alt="doctor list" className="w-5 h-5" />
             <p>Doctors List</p>
+          </NavLink>
+
+        </ul>
+      )}
+      {dToken && (
+        <ul className="flex flex-col gap-2">
+
+          <NavLink
+            to="/doctor-dashboard"
+            className={({ isActive }) =>
+              `${linkClass} ${isActive ? activeClass : ""}`
+            }
+          >
+            <img src={assets.home_icon} alt="home" className="w-5 h-5" />
+            <p>Dashboard</p>
+          </NavLink>
+
+          <NavLink
+            to="/doctor-appointments"
+            className={({ isActive }) =>
+              `${linkClass} ${isActive ? activeClass : ""}`
+            }
+          >
+            <img src={assets.appointment_icon} alt="appointment" className="w-5 h-5" />
+            <p>Appointments</p>
+          </NavLink>
+
+          <NavLink
+            to="/doctor-profile"
+            className={({ isActive }) =>
+              `${linkClass} ${isActive ? activeClass : ""}`
+            }
+          >
+            <img src={assets.people_icon} alt="doctor list" className="w-5 h-5" />
+            <p>Doctor Profile</p>
           </NavLink>
 
         </ul>
