@@ -28,7 +28,8 @@ function TopDoctors() {
                         />
 
                         <div className='mt-3'>
-                            <p className='text-green-500 text-sm'>Available</p>
+                            <p className={`text-sm ${item.available ? 'text-green-500' : 'text-gray-400'}`}>
+{item.available ? 'Available' :'Not available'}</p>
                             <p className='font-medium'>{item.name}</p>
                             <p className='text-sm text-gray-500'>{item.speciality}</p>
                         </div>

@@ -11,6 +11,7 @@ import Navbar from "./components/Navbar"
 import Footer from "./components/Footer"
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from "react-toastify";
+import Policy from "./components/Policy"
 function App() {
   return (
     <div>
@@ -26,6 +27,7 @@ function App() {
       <Route path="/my-profile" element={<MyProfile/>}/>
       <Route path="/appointment/:docId" element={<Appointments/>}/>
       <Route path="/my-appointments" element={<MyAppointments/>}/>
+      <Route path="/Policy" element={<Policy/>}/>
     </Routes>
     <Footer/>
     </div>
