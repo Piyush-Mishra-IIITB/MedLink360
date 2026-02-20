@@ -2,7 +2,7 @@ import { useState } from "react";
 import SymptomSelector from "../components/SymptomSelector";
 import DoctorCard from "../components/DoctorCard";
 import axios from "axios";
-
+import { toast } from "react-toastify";
 const AiConsult = () => {
   const [selectedSymptoms, setSelectedSymptoms] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -10,7 +10,7 @@ const AiConsult = () => {
   const [loading, setLoading] = useState(false);
 
   const findDoctor = async () => {
-    if (selectedSymptoms.length === 0) return alert("Select symptoms");
+    if (selectedSymptoms.length === 0) return toast.error("Select Symptoms");
 
     try {
       setLoading(true);
@@ -24,7 +24,7 @@ const AiConsult = () => {
       setSelectedSymptoms([]);
 
     } catch (err) {
-      alert("AI service unavailable");
+      toast.error("AI service unavailable");
     } finally {
       setLoading(false);
     }
