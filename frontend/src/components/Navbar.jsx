@@ -17,6 +17,20 @@ function Navbar() {
     window.location.href = "http://localhost:5174";
   };
 
+  // desktop active style
+  const navItem = ({ isActive }) =>
+    `py-1 transition border-b-2 ${
+      isActive
+        ? "text-primary border-primary"
+        : "text-gray-700 border-transparent hover:text-primary"
+    }`;
+
+  // mobile active style
+  const mobileItem = ({ isActive }) =>
+    `transition ${
+      isActive ? "text-primary font-semibold" : "text-gray-700"
+    }`;
+
   return (
     <div className="flex items-center justify-between py-4 px-8 border-b bg-white shadow-sm">
 
@@ -29,11 +43,18 @@ function Navbar() {
       />
 
       {/* Desktop Links */}
-      <ul className="hidden md:flex items-start gap-5 font-medium">
-        <NavLink to="/"><li className="py-1">Home</li></NavLink>
-        <NavLink to="/doctors"><li className="py-1">All Doctors</li></NavLink>
-        <NavLink to="/about"><li className="py-1">About</li></NavLink>
-        <NavLink to="/contact"><li className="py-1">Contact</li></NavLink>
+      <ul className="hidden md:flex items-start gap-6 font-medium">
+
+        <NavLink to="/" end className={navItem}><li>Home</li></NavLink>
+
+        <NavLink to="/doctors" className={navItem}><li>All Doctors</li></NavLink>
+
+        <NavLink to="/ai-consult" className={navItem}><li>AI Recommend</li></NavLink>
+
+        <NavLink to="/about" className={navItem}><li>About</li></NavLink>
+
+        <NavLink to="/contact" className={navItem}><li>Contact</li></NavLink>
+
       </ul>
 
       {/* Right Side */}
@@ -57,9 +78,15 @@ function Navbar() {
             {/* Dropdown */}
             <div className="absolute right-0 top-full mt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
               <div className="min-w-48 bg-white shadow-xl rounded-lg flex flex-col gap-3 p-4 text-sm text-gray-700">
-                <p onClick={() => navigate("/my-profile")} className="hover:text-primary cursor-pointer">My Profile</p>
-                <p onClick={() => navigate("/my-appointments")} className="hover:text-primary cursor-pointer">My Appointments</p>
-                <p onClick={logout} className="hover:text-red-500 cursor-pointer">Logout</p>
+                <p onClick={() => navigate("/my-profile")} className="hover:text-primary cursor-pointer">
+                  My Profile
+                </p>
+                <p onClick={() => navigate("/my-appointments")} className="hover:text-primary cursor-pointer">
+                  My Appointments
+                </p>
+                <p onClick={logout} className="hover:text-red-500 cursor-pointer">
+                  Logout
+                </p>
               </div>
             </div>
           </div>
@@ -101,6 +128,7 @@ function Navbar() {
             showMenu ? "translate-x-0" : "translate-x-full"
           }`}
         >
+
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b">
             <img className="w-32" src={assets.logo} alt="logo" />
@@ -114,12 +142,13 @@ function Navbar() {
 
           {/* Links */}
           <ul className="flex flex-col gap-6 px-8 py-8 text-lg font-medium">
-            <NavLink onClick={() => setShowMenu(false)} to="/">Home</NavLink>
-            <NavLink onClick={() => setShowMenu(false)} to="/doctors">All Doctors</NavLink>
-            <NavLink onClick={() => setShowMenu(false)} to="/about">About</NavLink>
-            <NavLink onClick={() => setShowMenu(false)} to="/contact">Contact</NavLink>
 
-            {/* Mobile Auth */}
+            <NavLink onClick={() => setShowMenu(false)} to="/" end className={mobileItem}>Home</NavLink>
+            <NavLink onClick={() => setShowMenu(false)} to="/doctors" className={mobileItem}>All Doctors</NavLink>
+            <NavLink onClick={() => setShowMenu(false)} to="/ai-consult" className={mobileItem}>AI Recommend</NavLink>
+            <NavLink onClick={() => setShowMenu(false)} to="/about" className={mobileItem}>About</NavLink>
+            <NavLink onClick={() => setShowMenu(false)} to="/contact" className={mobileItem}>Contact</NavLink>
+
             {!token && (
               <>
                 <button
