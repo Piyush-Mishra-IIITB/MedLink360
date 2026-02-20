@@ -1,26 +1,39 @@
-import jwt from 'jsonwebtoken'
+import jwt from "jsonwebtoken";
 
-const authAdmin= async(req,res,next)=>{
-   try{
-     const {atoken}=req.headers;
-     if(!atoken){
-   console.log(error);
-   res.json({success:false,message:"invalid person"});
-     }else{
-        const token_decode=jwt.verify(atoken,process.env.JWT_SECRET);
-        if(token_decode !==process.env.ADMIN_EMAIL + process.env.ADMIN_PASSWORD){
-             res.json({success:false,message:"invalid person"});
-        }
-        next();
-     }
+const authAdmin = async (req, res, next) => {
+  try {
 
+    const { atoken } = req.headers;
 
+    // No token
+    if (!atoken) {
+      return res.status(401).json({
+        success: false,
+        message: "Not Authorized Login Again",
+      });
+    }
 
-   }catch(error){
-   console.log(error);
-   res.json({success:false,message:"error occured"});
-   }
-}
+    // Verify token
+    const decoded = jwt.verify(atoken, process.env.JWT_SECRET);
 
+    // Check role
+    if (decoded.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Not Authorized",
+      });
+    }
+
+    // Allow request
+    next();
+
+  } catch (error) {
+    console.log("ADMIN AUTH ERROR:", error.message);
+    return res.status(401).json({
+      success: false,
+      message: "Invalid Token",
+    });
+  }
+};
 
 export default authAdmin;
