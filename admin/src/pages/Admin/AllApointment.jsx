@@ -137,7 +137,9 @@ return ( <div className="w-full px-6 py-8">
                   <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">
                     Cancelled
                   </span>
-                ) : (
+                ) : item.isCompleted
+                ? <p>Completed</p>
+                :(
                   <button
                     onClick={() => cancelAppointment(item._id)}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 active:scale-95 transition"
