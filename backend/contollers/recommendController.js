@@ -10,7 +10,7 @@ export const recommendDoctor = async (req, res) => {
     }
 
     // CALL FASTAPI
-    const ml = await axios.post("http://127.0.0.1:8001/predict", {
+    const ml = await axios.post("http://127.0.0.1:8000/predict", {
       symptoms: symptoms
     });
 

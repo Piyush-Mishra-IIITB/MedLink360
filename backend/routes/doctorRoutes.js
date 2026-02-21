@@ -13,4 +13,4 @@ doctorRouter.post('/cancel-appointment',authDoctor,appointmentCancel);
 doctorRouter.get('/dashboard',authDoctor,doctorDashboard);
 doctorRouter.get('/profile',authDoctor,doctorProfile);
 doctorRouter.post('/update-profile',authDoctor,updateDoctorPeofile);
-export default doctorRouter;
+ export default doctorRouter;

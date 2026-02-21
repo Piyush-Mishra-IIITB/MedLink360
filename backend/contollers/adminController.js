@@ -32,6 +32,14 @@ const addDoctor = async (req, res) => {
     if (password.length < 8)
       return res.json({ success: false, message: "Password must be 8+ chars" });
 
+    if (!imageFile)
+      return res.json({ success: false, message: "Doctor image required" });
+
+    // check duplicate doctor
+    const exists = await doctorModel.findOne({ email });
+    if (exists)
+      return res.json({ success: false, message: "Doctor already exists" });
+
     const hashedPass = await bcrypt.hash(password, 10);
 
     const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
@@ -68,12 +76,16 @@ const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-      const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, { expiresIn: "7d" });
-      return res.json({ success: true, token });
-    }
+    if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD)
+      return res.json({ success: false, message: "Invalid credentials" });
 
-    return res.json({ success: false, message: "Invalid credentials" });
+    const token = jwt.sign(
+      { role: "admin", email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({ success: true, token });
 
   } catch (error) {
     console.log(error);
@@ -100,8 +112,6 @@ const appointmentAdmin = async (req, res) => {
   try {
     const appointments = await appointmentModel
       .find({})
-     
-      
       .sort({ createdAt: -1 })
       .lean();
 
@@ -114,20 +124,30 @@ const appointmentAdmin = async (req, res) => {
 };
 
 
-/* ================= CANCEL APPOINTMENT ================= */
+/* ================= CANCEL APPOINTMENT (SAFE) ================= */
 const appointmentCancel = async (req, res) => {
   try {
     const { appointmentId } = req.body;
 
-    const appointment = await appointmentModel.findById(appointmentId);
+    // atomic guarded cancel
+    const appointment = await appointmentModel.findOneAndUpdate(
+      {
+        _id: appointmentId,
+        cancelled: false,
+        isCompleted: false,
+        payment: false
+      },
+      { $set: { cancelled: true } },
+      { new: true }
+    );
+
     if (!appointment)
-      return res.json({ success: false, message: "Appointment not found" });
+      return res.json({
+        success: false,
+        message: "Cannot cancel paid/completed appointment"
+      });
 
-    // mark cancelled
-    appointment.cancelled = true;
-    await appointment.save();
-
-    // free doctor slot safely
+    // release doctor slot
     const doctor = await doctorModel.findById(appointment.docId);
 
     if (doctor?.slots_booked?.[appointment.slotDate]) {

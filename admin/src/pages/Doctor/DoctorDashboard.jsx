@@ -1,10 +1,18 @@
 import React, { useContext, useEffect } from "react";
 import { DoctorContext } from "../../context/DoctorContext";
 import { assets } from "../../assets/assets_admin/assets";
+import { toast } from "react-toastify";
 
 function DoctorDashboard() {
 
-  const { dToken, dashData,appointments, getDashData, cancelAppointment, completeAppointment } = useContext(DoctorContext);
+  const {
+    dToken,
+    dashData,
+    appointments,
+    getDashData,
+    cancelAppointment,
+    completeAppointment
+  } = useContext(DoctorContext);
 
   /* -------- DATE FORMAT -------- */
   const months = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -13,6 +21,15 @@ function DoctorDashboard() {
     if (!slotDate) return "";
     const arr = slotDate.split("_");
     return `${arr[0]} ${months[Number(arr[1])]} ${arr[2]}`;
+  };
+
+  /* -------- PREVENT PAID CANCEL -------- */
+  const handleCancel = (item) => {
+    if (item?.payment) {
+      toast.error("Paid appointment cannot be cancelled");
+      return;
+    }
+    cancelAppointment(item._id);
   };
 
   /* -------- FETCH DASHBOARD -------- */
@@ -78,14 +95,15 @@ function DoctorDashboard() {
         <div className="divide-y">
 
           {appointments && appointments.length > 0 ? (
-      [...appointments].slice().reverse().slice(0,5).map((item, index) => {
+            [...appointments].slice().reverse().slice(0,5).map((item) => {
 
               const isCancelled = item?.cancelled;
               const isCompleted = item?.isCompleted;
+              const isPaid = item?.payment;
 
               return (
                 <div
-                  key={index}
+                  key={item._id}
                   className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition"
                 >
 
@@ -123,14 +141,22 @@ function DoctorDashboard() {
                   ) : (
                     <div className="flex items-center gap-3">
 
+                      {/* CANCEL */}
                       <button
-                        onClick={() => cancelAppointment(item._id)}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 active:scale-95 transition"
+                        onClick={() => handleCancel(item)}
+                        disabled={isPaid}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition active:scale-95
+                          ${isPaid
+                            ? "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed"
+                            : "border-red-200 text-red-600 hover:bg-red-50"}
+                        `}
+                        title={isPaid ? "Paid appointment cannot be cancelled" : "Cancel appointment"}
                       >
                         <img src={assets.cancel_icon} className="w-4" alt="" />
                         Cancel
                       </button>
 
+                      {/* COMPLETE */}
                       <button
                         onClick={() => completeAppointment(item._id)}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-green-200 text-green-700 hover:bg-green-50 active:scale-95 transition"
