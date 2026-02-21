@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
-from model import predict_specialist
+from predict import predict_specialist
 
 app = FastAPI()
 
