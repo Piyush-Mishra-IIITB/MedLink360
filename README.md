@@ -12,6 +12,8 @@ Admin Panel: https://medlink360-admin.onrender.com
 
 Backend API: https://medlink-backend-2bgo.onrender.com
 
+ML_URL: https://medlink360.onrender.com
+
 🧠 Core Idea
 
 Traditional hospital apps assume users already know the correct specialist.
