@@ -9,10 +9,14 @@ export const recommendDoctor = async (req, res) => {
       return res.status(400).json({ message: "No symptoms provided" });
     }
 
-    // use ENV instead of localhost
+    // normalize url
+    const base = process.env.ML_API_URL.replace(/\/$/, "");
+
+    // VERY IMPORTANT: long timeout for cold start
     const ml = await axios.post(
-      `${process.env.ML_API_URL}/predict`,
-      { symptoms }
+      `${base}/predict`,
+      { symptoms },
+      { timeout: 60000 }   // ← critical fix
     );
 
     const specialist = ml.data.recommended_specialist;
@@ -24,8 +28,11 @@ export const recommendDoctor = async (req, res) => {
     res.json({ specialist, doctors });
 
   } catch (error) {
-    console.log("ML ERROR ↓↓↓↓↓↓↓");
-    console.log(error.response?.data || error.message);
+    console.log("===== ML ERROR =====");
+    console.log(error.code);
+    console.log(error.message);
+    console.log(error.response?.data);
+
     res.status(500).json({ message: "AI service unavailable" });
   }
 };
