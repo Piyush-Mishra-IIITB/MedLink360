@@ -9,14 +9,14 @@ export const recommendDoctor = async (req, res) => {
       return res.status(400).json({ message: "No symptoms provided" });
     }
 
-    // CALL FASTAPI
-    const ml = await axios.post("http://127.0.0.1:8000/predict", {
-      symptoms: symptoms
-    });
+    // use ENV instead of localhost
+    const ml = await axios.post(
+      `${process.env.ML_API_URL}/predict`,
+      { symptoms }
+    );
 
     const specialist = ml.data.recommended_specialist;
 
-    // FIND DOCTORS
     const doctors = await Doctor.find({
       speciality: { $regex: new RegExp(`^${specialist}$`, "i") }
     }).limit(5);
