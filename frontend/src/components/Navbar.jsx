@@ -14,8 +14,8 @@ function Navbar() {
   };
 
   const goToDoctorPanel = () => {
-    window.location.href = "http://localhost:5174";
-  };
+  window.location.href = import.meta.env.VITE_DOCTOR_PANEL_URL;
+};
 
   // desktop active style
   const navItem = ({ isActive }) =>
