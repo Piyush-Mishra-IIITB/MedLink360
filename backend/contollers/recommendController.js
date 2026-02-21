@@ -42,10 +42,9 @@ const callML = async (symptoms) => {
 
 /**
  * Recommend doctors using ML specialization
- */
-export const recommendDoctor = async (req, res) => {
+ */export const recommendDoctor = async (req, res) => {
   try {
-    const { symptoms } = req.body;
+    let { symptoms } = req.body;
 
     if (!Array.isArray(symptoms) || symptoms.length === 0) {
       return res.status(400).json({
@@ -54,7 +53,12 @@ export const recommendDoctor = async (req, res) => {
       });
     }
 
-    console.log("Symptoms:", symptoms);
+    // 🧠 sanitize symptoms before ML
+    symptoms = symptoms.map(s =>
+      String(s).trim().toLowerCase()
+    );
+
+    console.log("Cleaned Symptoms:", symptoms);
 
     // ML prediction
     const specialist = await callML(symptoms);

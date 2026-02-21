@@ -1,24 +1,17 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
-from predict import predict_specialist
+from model import predict_specialist
 
 app = FastAPI()
 
-
-class SymptomsRequest(BaseModel):
+class SymptomInput(BaseModel):
     symptoms: List[str]
 
-
-@app.get("/")
-def home():
-    return {"message": "ML service running"}
-
-
 @app.post("/predict")
-def get_prediction(data: SymptomsRequest):
-    specialist = predict_specialist(data.symptoms)
-
-    return {
-        "recommended_specialist": specialist
-    }
+def predict(data: SymptomInput):
+    try:
+        specialist = predict_specialist(data.symptoms)
+        return {"recommended_specialist": specialist}
+    except Exception as e:
+        return {"recommended_specialist": "General physician"}
