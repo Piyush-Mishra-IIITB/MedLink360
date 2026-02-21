@@ -1,29 +1,41 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import SymptomSelector from "../components/SymptomSelector";
 import DoctorCard from "../components/DoctorCard";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { AppContext } from "../context/AppContext";
+
 const AiConsult = () => {
+  const { backendURL } = useContext(AppContext);
+
   const [selectedSymptoms, setSelectedSymptoms] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [specialist, setSpecialist] = useState("");
   const [loading, setLoading] = useState(false);
 
   const findDoctor = async () => {
-    if (selectedSymptoms.length === 0) return toast.error("Select Symptoms");
+    if (selectedSymptoms.length === 0)
+      return toast.error("Select Symptoms");
 
     try {
       setLoading(true);
 
-      const res = await axios.post("/api/ai-recommend", {
-        symptoms: selectedSymptoms
-      });
+      // 🔴 IMPORTANT CHANGE: call backend URL
+      const res = await axios.post(
+        backendURL + "/api/ai-recommend",
+        { symptoms: selectedSymptoms }
+      );
 
-      setDoctors(res.data.doctors);
-      setSpecialist(res.data.specialist);
-      setSelectedSymptoms([]);
+      if (res.data.success) {
+        setDoctors(res.data.doctors);
+        setSpecialist(res.data.specialist);
+        setSelectedSymptoms([]);
+      } else {
+        toast.error(res.data.message || "AI failed");
+      }
 
     } catch (err) {
+      console.log(err);
       toast.error("AI service unavailable");
     } finally {
       setLoading(false);
@@ -32,7 +44,6 @@ const AiConsult = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
-
       <div className="max-w-5xl mx-auto">
 
         {/* HERO */}
@@ -45,8 +56,6 @@ const AiConsult = () => {
           </p>
         </div>
 
-        
-
         {/* SELECTOR */}
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <SymptomSelector
@@ -54,7 +63,6 @@ const AiConsult = () => {
             setSelected={setSelectedSymptoms}
           />
 
-          {/* BUTTON */}
           <div className="mt-8 flex justify-center">
             <button
               onClick={findDoctor}
@@ -65,7 +73,7 @@ const AiConsult = () => {
           </div>
         </div>
 
-        {/* LOADING STATE */}
+        {/* LOADING */}
         {loading && (
           <div className="text-center mt-10 text-gray-500 animate-pulse">
             AI is analyzing your symptoms and matching specialists...
@@ -75,7 +83,6 @@ const AiConsult = () => {
         {/* RESULT */}
         {!loading && specialist && (
           <div className="mt-10">
-
             <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center mb-6">
               <p className="text-gray-600 mb-1">Recommended Specialist</p>
               <h2 className="text-2xl font-bold text-green-700">
@@ -84,20 +91,19 @@ const AiConsult = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {doctors.map(doc => (
+              {doctors.map((doc) => (
                 <DoctorCard key={doc._id} doctor={doc} />
               ))}
             </div>
           </div>
         )}
 
-        {/* EMPTY STATE */}
+        {/* EMPTY */}
         {!loading && doctors.length === 0 && specialist === "" && (
           <div className="text-center mt-12 text-gray-400">
             No analysis yet. Select symptoms and click Find Suitable Doctor.
           </div>
         )}
-
       </div>
     </div>
   );
