@@ -6,17 +6,20 @@ export const recommendDoctor = async (req, res) => {
     const { symptoms } = req.body;
 
     if (!symptoms || symptoms.length === 0) {
-      return res.status(400).json({ message: "No symptoms provided" });
+      return res.status(400).json({
+        success: false,
+        message: "No symptoms provided"
+      });
     }
 
-    // normalize url
+    // remove trailing slash if present
     const base = process.env.ML_API_URL.replace(/\/$/, "");
 
-    // VERY IMPORTANT: long timeout for cold start
+    // call ML server
     const ml = await axios.post(
       `${base}/predict`,
       { symptoms },
-      { timeout: 60000 }   // ← critical fix
+      { timeout: 60000 }
     );
 
     const specialist = ml.data.recommended_specialist;
@@ -25,7 +28,12 @@ export const recommendDoctor = async (req, res) => {
       speciality: { $regex: new RegExp(`^${specialist}$`, "i") }
     }).limit(5);
 
-    res.json({ specialist, doctors });
+    // ⭐ IMPORTANT: send success:true
+    return res.json({
+      success: true,
+      specialist,
+      doctors
+    });
 
   } catch (error) {
     console.log("===== ML ERROR =====");
@@ -33,6 +41,9 @@ export const recommendDoctor = async (req, res) => {
     console.log(error.message);
     console.log(error.response?.data);
 
-    res.status(500).json({ message: "AI service unavailable" });
+    return res.status(500).json({
+      success: false,
+      message: "AI service unavailable"
+    });
   }
 };
