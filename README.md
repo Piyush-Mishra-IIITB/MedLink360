@@ -1,4 +1,4 @@
-MedLink360 — AI Powered Doctor Appointment Platform
+Prescripto — AI Powered Doctor Appointment Platform
 
 A full-stack healthcare appointment ecosystem where patients, doctors, and admin interact in one system, enhanced with an ML-based specialist recommendation engine.
 
