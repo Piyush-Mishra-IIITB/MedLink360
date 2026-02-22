@@ -1,7 +1,6 @@
 fastapi
-uvicorn
+uvicorn[standard]
+numpy
 pandas
 scikit-learn
 joblib
-notebook
-ipykernel
