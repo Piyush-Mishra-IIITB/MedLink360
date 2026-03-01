@@ -48,32 +48,34 @@ function DoctorAppointments() {
     cancelAppointment(item._id);
   };
 
-  const openConsultation = async (appointmentId) => {
-    try {
-      const data = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/doctor/capabilities/${appointmentId}`,
-        { headers: { token: dToken } }
-      ).then(r => r.json());
+ const openConsultation = async (appointmentId) => {
+  try {
+    const data = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/doctor/capabilities/${appointmentId}`,
+      { headers: { token: dToken } }
+    ).then(r => r.json());
 
-      if (!data.canCall) {
-        if (data.reason === "OUTSIDE_TIME")
-          toast.error("Consultation allowed only during appointment time");
-        else if (data.reason === "CLOSED")
-          toast.error("Appointment already finished");
-        else
-          toast.error("Cannot start consultation");
-        return;
-      }
-
-      window.open(
-        `/consult/${appointmentId}?role=doctor&id=${localStorage.getItem("doctorId")}`,
-        "_blank"
-      );
-
-    } catch {
-      toast.error("Server error");
+    if (!data.canCall) {
+      if (data.reason === "OUTSIDE_TIME")
+        toast.error("Consultation allowed only during appointment time");
+      else if (data.reason === "CLOSED")
+        toast.error("Appointment already finished");
+      else
+        toast.error("Cannot start consultation");
+      return;
     }
-  };
+
+    const clientURL = import.meta.env.VITE_CLIENT_URL;
+
+    window.open(
+      `${clientURL}/consult/${appointmentId}?role=doctor&id=${localStorage.getItem("doctorId")}`,
+      "_blank"
+    );
+
+  } catch {
+    toast.error("Server error");
+  }
+};
 
   // 🔥 SORT — active chats first
   const sortedAppointments = [...appointments].sort((a, b) =>
