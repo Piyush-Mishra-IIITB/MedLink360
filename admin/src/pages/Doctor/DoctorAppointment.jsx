@@ -68,9 +68,9 @@ function DoctorAppointments() {
     const clientURL = import.meta.env.VITE_CLIENT_URL;
 
     window.open(
-      `${clientURL}/consult/${appointmentId}?role=doctor&id=${localStorage.getItem("doctorId")}`,
-      "_blank"
-    );
+  `${import.meta.env.VITE_ADMIN_URL}/consult/${appointmentId}?role=doctor&id=${localStorage.getItem("doctorId")}`,
+  "_blank"
+);
 
   } catch {
     toast.error("Server error");
