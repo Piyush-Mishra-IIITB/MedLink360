@@ -1,182 +1,255 @@
-Prescripto — AI Powered Doctor Appointment Platform
+# Prescripto — AI Powered Doctor Appointment & Tele-Consultation Platform
 
-A full-stack healthcare appointment ecosystem where patients, doctors, and admin interact in one system, enhanced with an ML-based specialist recommendation engine.
+Prescripto is a full-stack healthcare platform that combines appointment booking, real-time tele-consultation and an AI triage engine to guide patients to the correct medical specialist before booking.
 
-The platform not only books appointments — it also helps users who don’t know which doctor to visit by predicting the correct specialist from symptoms.
+Unlike traditional hospital systems where users must manually choose a doctor, Prescripto predicts the appropriate specialist from symptoms and automatically suggests relevant doctors.
 
-🌐 Live Deployment
+---
 
-User App: https://medlink360-frontend.onrender.com
+## 🌐 Live Deployment
 
-Admin Panel: https://medlink360-admin.onrender.com
+* User App: https://medlink360-frontend.onrender.com
+* Admin Panel: https://medlink360-admin.onrender.com
+* Backend API: https://medlink-backend-2bgo.onrender.com
+* AI Service: https://medlink360.onrender.com
 
-Backend API: https://medlink-backend-2bgo.onrender.com
+---
 
-ML_URL: https://medlink360.onrender.com
+## 🧠 Problem Statement
 
-🧠 Core Idea
+Patients frequently book the wrong specialist due to lack of medical knowledge, resulting in:
 
-Traditional hospital apps assume users already know the correct specialist.
+* incorrect appointments
+* longer diagnosis cycles
+* hospital congestion
+* repeated bookings
 
-MedLink360 workflow
+Prescripto introduces an **AI medical triage layer** before booking.
 
-Select Symptoms → AI predicts specialist → Show matching doctors → Book instantly
+### System Flow
 
-So the platform acts as both:
+```
+User Symptoms → Backend API → ML Model → Predicted Specialist
+               ↓
+        Matching Doctors → Instant Booking → Consultation
+```
 
-Appointment Booking System
+The platform therefore acts as both:
 
-AI Medical Triage Assistant
+1. Appointment Booking System
+2. AI Medical Triage Assistant
 
+---
 
+## 👥 System Roles
 
-Flow:
+### 👤 Patient
 
-User Symptoms → Backend → ML Model → Specialist → DB Doctors → UI Recommendations
+* Authentication (JWT)
+* AI-based specialist prediction
+* Doctor recommendations
+* Book / cancel appointments
+* Razorpay payment integration
+* Appointment history
+* Real-time chat & video consultation
 
-👥 Roles & Features
+### 🧑‍⚕️ Doctor
 
-👤 Patient
+* Secure dashboard login
+* Live consultation room (WebRTC)
+* Chat with patient
+* Mark appointment complete
+* Cancel unpaid bookings
+* Update availability & profile
+* Earnings dashboard
 
-Register / Login
+### 🛠️ Admin
 
-Browse doctors
+* Add / manage doctors
+* Toggle availability
+* Monitor all appointments
+* Cancel bookings
+* Analytics dashboard
 
-Book appointment
+---
 
-Cancel appointment
+## 🤖 AI Recommendation Engine
 
-View appointment history
+Users select symptoms instead of manually choosing departments.
 
-Online payment (Razorpay)
+```
+Symptoms → ML Model → Specialist → Doctor List
+```
 
-AI doctor recommendation
+Model prevents incorrect booking and reduces hospital triage workload.
 
-🧑‍⚕️ Doctor
+Model served via FastAPI inference server.
 
-Login dashboard
+---
 
-View patient bookings
+## 🏗️ Architecture
 
-Mark appointment complete
+### High Level Architecture
 
-Cancel unpaid bookings
+```
+Frontend (React)
+       ↓
+Node.js API Server
+       ↓
+MongoDB Database
+       ↓
+FastAPI ML Service
+       ↓
+Socket.IO Signaling Server
+       ↓
+WebRTC Peer-to-Peer Call
+```
 
-Update profile
+### Realtime Consultation Logic
 
-Track earnings
+Server maintains authoritative room state.
 
-🛠️ Admin
+* Doctor joins + Patient joins → `room-ready`
+* Only then call allowed
+* Prevents ghost calls & duplicate peers
+* Automatic disconnect handling
 
-Add doctor
+---
 
-Change doctor availability
+## 🧰 Tech Stack
 
-View all appointments
+### Frontend
 
-Cancel bookings
+* React (Vite)
+* Context API state management
+* Tailwind CSS
+* Socket.IO client
+* WebRTC media handling
 
-Dashboard analytics
+### Backend
 
-🤖 AI Health Assistant
+* Node.js
+* Express.js
+* MongoDB + Mongoose
+* JWT Authentication
+* Cloudinary media storage
+* Multer uploads
 
-Select symptoms
+### Realtime
 
-Predict specialist
+* Socket.IO signaling
+* WebRTC peer-to-peer video calling
+* ICE/STUN negotiation
 
-Show correct doctors
+### Payments
 
-Prevent wrong bookings
+* Razorpay order + verification
 
-🧰 Tech Stack
-Frontend
+### Machine Learning
 
-React (Vite)
+* Python FastAPI inference server
+* Scikit-learn classification model
+* Joblib serialized model
 
-Context API
+---
 
-Axios
+## 📡 REST API Structure
 
-Tailwind CSS
+### Admin `/api/admin`
 
-Backend
+| Method | Route                    | Description         |
+| ------ | ------------------------ | ------------------- |
+| POST   | /login                   | Admin login         |
+| POST   | /add-doctor              | Add doctor          |
+| GET    | /all-doctor              | List doctors        |
+| PATCH  | /change-availability/:id | Toggle availability |
+| GET    | /appointments            | All bookings        |
+| POST   | /cancel-appointment      | Cancel booking      |
+| GET    | /dashboard               | Analytics           |
 
-Node.js
+### Doctor `/api/doctor`
 
-Express.js
+| Method | Route                 | Description     |
+| ------ | --------------------- | --------------- |
+| POST   | /login                | Doctor login    |
+| GET    | /appointments         | Doctor bookings |
+| POST   | /complete-appointment | Mark complete   |
+| POST   | /cancel-appointment   | Cancel unpaid   |
+| GET    | /dashboard            | Earnings        |
+| GET    | /profile              | Doctor profile  |
+| POST   | /update-profile       | Update profile  |
 
-MongoDB + Mongoose
+### User `/api/user`
 
-JWT Authentication
+| Method | Route               | Description    |
+| ------ | ------------------- | -------------- |
+| POST   | /register           | Register       |
+| POST   | /login              | Login          |
+| GET    | /get-profile        | Profile        |
+| POST   | /update-profile     | Update profile |
+| POST   | /book-appointment   | Book           |
+| GET    | /appointments       | History        |
+| POST   | /cancel-appointment | Cancel         |
+| POST   | /payment-razorpay   | Create order   |
+| POST   | /verifyRazorpay     | Verify payment |
 
-Multer
+### AI Recommendation `/api/ai-recommend`
 
-Cloudinary
+| Method | Route    | Description                      |
+| ------ | -------- | -------------------------------- |
+| POST   | /predict | Predict specialist from symptoms |
 
-Payment
+---
 
-Razorpay Integration
+## ⚙️ Local Setup
 
-Machine Learning
+### Backend
 
-Python
+```
+cd backend
+npm install
+npm run dev
+```
 
-FastAPI
+### Frontend
 
-Scikit-learn
+```
+cd frontend
+npm install
+npm run dev
+```
 
-Joblib model serving
+### Admin
 
-📡 API Routes
-Admin ->/api/admin
+```
+cd admin
+npm install
+npm run dev
+```
 
-POST	/login	Admin login
+### AI Server
 
-POST	/add-doctor	Add doctor
+```
+cd ml-service
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
 
-GET	/all-doctor	Get all doctors
+---
 
-PATCH	/change-availability/:id	Toggle availability
+## 🔐 Environment Variables
 
-GET	/appointments	All bookings
+Create `.env` files using `.env.example`
 
-POST	/cancel-appointment	Cancel booking
+---
 
-GET	/dashboard	Stats
+## Key Engineering Highlights
 
-Doctor -> /api/doctor
+* Authoritative real-time consultation room state
+* Duplicate message prevention
+* Secure role-based JWT authorization
+* Payment verification workflow
+* ML inference microservice architecture
+* Peer-to-peer WebRTC video consultation
 
-GET	/list	Public doctor list
-
-POST	/login	Doctor login
-
-GET	/appointments	Doctor bookings
-
-POST	/complete-appointment	Mark complete
-
-POST	/cancel-appointment	Cancel unpaid
-
-GET	/dashboard	Earnings
-
-GET	/profile	Doctor profile
-
-POST	/update-profile	Update profile
-
-User -> /api/user
-
-POST	/register	Register
-
-POST	/login	Login
-
-GET	/get-profile	Profile
-
-POST	/update-profile	Update profile
-
-POST	/book-appointment	Book doctor
-
-GET	/appointments	Appointment history
-POST	/cancel-appointment	Cancel
-POST	/payment-razorpay	Create order
-POST	/verifyRazorpay	Verify payment
-AI Recommendation /api/ai-recommend
-
+---
