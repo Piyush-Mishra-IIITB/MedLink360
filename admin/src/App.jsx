@@ -40,7 +40,7 @@ function App() {
         {/* ADMIN PANEL */}
         {aToken && (
           <Routes>
-            <Route path="/" element={<></>} />
+            <Route path="/" element={<Navigate to="/doctor-appointments" replace />} />
             <Route path="/admin-dashboard" element={<Dashboard />} />
             <Route path="/all-appointment" element={<AllApointments />} />
             <Route path="/add-doctor" element={<AddDoctor />} />
