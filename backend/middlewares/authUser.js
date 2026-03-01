@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-
+import mongoose from "mongoose";
 const authUser = async (req, res, next) => {
   try {
 
@@ -12,8 +12,8 @@ const authUser = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // ✅ store in request object
-    req.userId = decoded.id;
-
+    req.userId = new mongoose.Types.ObjectId(decoded.id);
+    req.role = decoded.role; 
     next();
 
   } catch (error) {

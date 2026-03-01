@@ -13,7 +13,7 @@ const authDoctor = async (req, res, next) => {
 
     // ✅ store in request object
     req.docId = decoded.id;
-
+    req.role = decoded.role;
     next();
 
   } catch (error) {

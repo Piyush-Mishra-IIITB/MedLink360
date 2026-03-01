@@ -2,12 +2,17 @@ import mongoose from "mongoose";
 
 
 const appointmentSchema=new mongoose.Schema({
-    userId:{
-        type:String,required:true
-    },
-    docId:{
-        type:String,required:true
-    },
+   userId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "user",
+  required: true
+},
+
+docId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "doctor",
+  required: true
+}, 
     slotDate:{
         type:String,required:true
     },
@@ -34,7 +39,16 @@ const appointmentSchema=new mongoose.Schema({
     },
     isCompleted:{
         type:Boolean,default:false
-    }
+    },
+    // new
+    duration:{
+    type:Number,
+    default:15
+},
+doctorUnreadCount: { type: Number, default: 0 },
+patientUnreadCount: { type: Number, default: 0 },
+lastMessage: { type: String, default: "" },
+lastMessageAt: { type: Date, default: null }
 
 });
 

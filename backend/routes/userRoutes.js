@@ -3,6 +3,11 @@ import e from "express";
 import { registerUser,loginUser,getProfile,updateProfile,bookAppointment, listAppointment, cancelAppointment, paymentRazorpay, verifyRazorpay} from "../contollers/uerController.js";
 import authUser from "../middlewares/authUser.js";
 import upload from "../middlewares/multer.js";
+//new
+import appointmentModel from "../models/appointmentModel.js";
+import { getCapabilities } from "../contollers/consultationController.js";
+// appointmentController.js
+
 
 const userRouter=e.Router();
 
@@ -16,6 +21,7 @@ userRouter.get('/appointments',authUser,listAppointment);
 userRouter.post('/cancel-appointment',authUser,cancelAppointment);
 userRouter.post("/payment-razorpay",authUser,paymentRazorpay);
 userRouter.post('/verifyRazorpay',authUser,verifyRazorpay);
-
+//new
+userRouter.get("/permissions/:appointmentId", authUser, getCapabilities);
 
 export default userRouter;

@@ -2,6 +2,8 @@ import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import messageModel from "../models/messageModel.js";
 
 /* =========================================================
    CHANGE AVAILABILITY
@@ -74,6 +76,7 @@ const loginDoctor = async (req, res) => {
       success: true,
       token,
       doctor: {
+        _id: doctor._id,
         name: doctor.name,
         email: doctor.email,
       },
@@ -91,15 +94,38 @@ const loginDoctor = async (req, res) => {
 ========================================================= */
 const appointmentsDoctor = async (req, res) => {
   try {
-    const docId = req.docId;
+    const docId = new mongoose.Types.ObjectId(req.docId);
 
     const appointments = await appointmentModel
       .find({ docId })
       .populate("userId", "name image dob")
+      .select(
+        "_id userId slotDate slotTime amount payment cancelled isCompleted doctorUnreadCount lastMessage lastMessageAt"
+      )
       .sort({ createdAt: -1 })
       .lean();
 
-    res.json({ success: true, appointments });
+    // ⭐ normalize response for frontend
+    const normalized = appointments.map(appt => ({
+      ...appt,
+
+      // frontend expects userData
+      userData: appt.userId
+        ? {
+            name: appt.userId.name,
+            image: appt.userId.image,
+            dob: appt.userId.dob
+          }
+        : {
+            name: "Unknown",
+            image: ""
+          },
+
+      // optional: remove raw mongo object (clean API)
+      userId: appt.userId?._id || appt.userId
+    }));
+
+    res.json({ success: true, appointments: normalized });
 
   } catch (error) {
     console.log(error);
@@ -107,19 +133,18 @@ const appointmentsDoctor = async (req, res) => {
   }
 };
 
-
 /* =========================================================
-   COMPLETE APPOINTMENT (ATOMIC SAFE)
+   COMPLETE APPOINTMENT
 ========================================================= */
 const appointmentComplete = async (req, res) => {
   try {
-    const docId = req.docId;
+    const docId = new mongoose.Types.ObjectId(req.docId);
     const { appointmentId } = req.body;
 
     const appointment = await appointmentModel.findOneAndUpdate(
       {
-        _id: appointmentId,
-        docId: docId,
+        _id: new mongoose.Types.ObjectId(appointmentId),
+        docId,
         cancelled: false,
         isCompleted: false
       },
@@ -143,17 +168,17 @@ const appointmentComplete = async (req, res) => {
 
 
 /* =========================================================
-   CANCEL APPOINTMENT (ATOMIC SAFE)
+   CANCEL APPOINTMENT
 ========================================================= */
 const appointmentCancel = async (req, res) => {
   try {
-    const docId = req.docId;
+    const docId = new mongoose.Types.ObjectId(req.docId);
     const { appointmentId } = req.body;
 
     const appointment = await appointmentModel.findOneAndUpdate(
       {
-        _id: appointmentId,
-        docId: docId,
+        _id: new mongoose.Types.ObjectId(appointmentId),
+        docId,
         cancelled: false,
         isCompleted: false,
         payment: false
@@ -168,7 +193,7 @@ const appointmentCancel = async (req, res) => {
         message: "Cannot cancel paid/completed appointment"
       });
 
-    // free slot after successful cancel
+    // free slot
     const doctor = await doctorModel.findById(docId);
     if (doctor?.slots_booked?.[appointment.slotDate]) {
       doctor.slots_booked[appointment.slotDate] =
@@ -192,7 +217,7 @@ const appointmentCancel = async (req, res) => {
 ========================================================= */
 const doctorDashboard = async (req, res) => {
   try {
-    const docId = req.docId;
+    const docId = new mongoose.Types.ObjectId(req.docId);
 
     const appointments = await appointmentModel.find({ docId }).lean();
 
@@ -267,6 +292,92 @@ const updateDoctorPeofile = async (req, res) => {
   }
 };
 
+// GET all chats with unread messages
+// GET Doctor unread conversation queue
+const getUnreadChats = async (req, res) => {
+  try {
+    const doctorId = new mongoose.Types.ObjectId(req.docId);
+
+    const appointments = await appointmentModel
+      .find({
+        docId: doctorId,
+        cancelled: false,
+        doctorUnreadCount: { $gt: 0 }
+      })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const conversations = appointments.map((appt) => {
+
+      let slotLabel = "";
+      if (appt.slotDate && appt.slotTime) {
+        const parts = appt.slotDate.split("_");
+        const months = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        slotLabel = `${parts[0]} ${months[Number(parts[1])]} | ${appt.slotTime}`;
+      }
+
+      return {
+        appointmentId: appt._id,
+        patientName: appt.userData?.name || appt.userId?.name || "Patient",
+        patientImage: appt.userData?.image || null,
+        lastMessage: appt.lastMessage || "New message",
+        lastMessageTime: appt.lastMessageAt || appt.updatedAt,
+        unreadCount: appt.doctorUnreadCount || 0,
+        slotLabel
+      };
+    });
+
+    const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
+
+    res.json({
+      success: true,
+      totalUnread,
+      conversations
+    });
+
+  } catch (error) {
+    console.log("Unread chat error:", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// mark as read
+// MARK CHAT AS READ (doctor opens chat)
+const markChatAsRead = async (req, res) => {
+  try {
+
+    const doctorId = new mongoose.Types.ObjectId(req.docId);
+    const appointmentId = new mongoose.Types.ObjectId(req.body.appointmentId);
+
+    const appt = await appointmentModel.findOne({
+      _id: appointmentId,
+      docId: doctorId
+    });
+
+    if (!appt)
+      return res.json({ success: false, message: "Appointment not found" });
+
+    // reset unread counter
+    appt.doctorUnreadCount = 0;
+    await appt.save();
+
+    // mark all patient messages as seen
+    await messageModel.updateMany(
+      {
+        appointmentId: appointmentId,
+        sender: "patient",
+        seen: false
+      },
+      { $set: { seen: true } }
+    );
+
+    res.json({ success: true });
+
+  } catch (error) {
+    console.log("mark read error:", error);
+    res.json({ success: false, message: error.message });
+  }
+};
 
 export {
   changeAvailability,
@@ -278,4 +389,6 @@ export {
   doctorDashboard,
   updateDoctorPeofile,
   doctorProfile,
-};
+  getUnreadChats,
+  markChatAsRead
+}; 
