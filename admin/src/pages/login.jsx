@@ -26,6 +26,7 @@ const {setDToken}=useContext(DoctorContext);
         const{data}=await axios.post(backendURL + '/api/doctor/login',{email,password});
         if(data.success){
             localStorage.setItem('dToken',data.token);
+            localStorage.setItem("doctorId", data.doctor._id);
             setDToken(data.token);
          }else{
             toast.error(data.message);

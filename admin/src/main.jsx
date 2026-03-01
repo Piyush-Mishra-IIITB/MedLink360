@@ -6,14 +6,17 @@ import { BrowserRouter } from "react-router-dom";
 import AdminContextProvider from "./context/AdminContext.jsx";
 import DoctorContextProvider from "./context/DoctorContext.jsx";
 import AppContextProvider from "./context/AppContext.jsx";
+import { DoctorSocketProvider } from "./context/DoctorSocketContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <AdminContextProvider>
-      <DoctorContextProvider> 
-          <AppContextProvider>
-           <App />
-          </AppContextProvider>
+      <DoctorContextProvider>
+        <AppContextProvider>
+          <DoctorSocketProvider>   {/* ⭐ GLOBAL SOCKET — NEVER UNMOUNTS */}
+            <App />
+          </DoctorSocketProvider>
+        </AppContextProvider>
       </DoctorContextProvider>
     </AdminContextProvider>
   </BrowserRouter>
