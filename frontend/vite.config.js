@@ -12,5 +12,8 @@ export default defineConfig({
         secure: false
       }
     }
+  },
+  resolve: {
+    dedupe: ["react", "react-dom"]
   }
 })

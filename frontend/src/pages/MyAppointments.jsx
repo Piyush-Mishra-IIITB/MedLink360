@@ -9,7 +9,21 @@ function MyAppointments() {
   const [appointments, setAppointments] = useState([]);
   const navigate = useNavigate();
 
-  const months = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const months = [
+    "",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   const slotDateFormat = (slotDate) => {
     if (!slotDate) return "";
@@ -20,13 +34,11 @@ function MyAppointments() {
   // ================= GET APPOINTMENTS =================
   const getUserAppointment = async () => {
     try {
-      const { data } = await axios.get(
-        backendURL + "/api/user/appointments",
-        { headers: { token } }
-      );
+      const { data } = await axios.get(backendURL + "/api/user/appointments", {
+        headers: { token },
+      });
 
       if (data.success) setAppointments(data.appointments.reverse());
-
     } catch (error) {
       console.log(error);
       toast.error("Failed to fetch appointments");
@@ -43,7 +55,7 @@ function MyAppointments() {
       const { data } = await axios.post(
         backendURL + "/api/user/cancel-appointment",
         { appointmentId },
-        { headers: { token } }
+        { headers: { token } },
       );
 
       if (data.success) {
@@ -51,7 +63,6 @@ function MyAppointments() {
         getUserAppointment();
         getDoctorsData();
       } else toast.error(data.message);
-
     } catch (error) {
       toast.error("Cancel failed");
     }
@@ -59,7 +70,6 @@ function MyAppointments() {
 
   // ================= OPEN RAZORPAY =================
   const initPay = (order, appointmentId) => {
-
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: order.amount,
@@ -74,9 +84,9 @@ function MyAppointments() {
             backendURL + "/api/user/verifyRazorpay",
             {
               ...response,
-              appointmentId
+              appointmentId,
             },
-            { headers: { token } }
+            { headers: { token } },
           );
 
           if (data.success) {
@@ -86,14 +96,13 @@ function MyAppointments() {
           } else {
             toast.error("Payment verification failed");
           }
-
         } catch (error) {
           console.log(error);
           toast.error("Verification error");
         }
       },
 
-      theme: { color: "#3399cc" }
+      theme: { color: "#3399cc" },
     };
 
     const rzp = new window.Razorpay(options);
@@ -106,12 +115,11 @@ function MyAppointments() {
       const { data } = await axios.post(
         backendURL + "/api/user/payment-razorpay",
         { appointmentId },
-        { headers: { token } }
+        { headers: { token } },
       );
 
       if (data.success) initPay(data.order, appointmentId);
       else toast.error("Order creation failed");
-
     } catch (error) {
       console.log(error);
       toast.error("Payment init failed");
@@ -131,7 +139,6 @@ function MyAppointments() {
             key={item._id}
             className="flex flex-col md:flex-row gap-6 bg-white p-5 rounded-xl shadow-sm border hover:shadow-xl transition-all"
           >
-
             <img
               src={item?.docData?.image}
               alt="doctor"
@@ -159,13 +166,40 @@ function MyAppointments() {
 
             {/* ACTION BUTTONS */}
             <div className="flex md:flex-col gap-3 justify-center">
-
               {/* Paid */}
-              {!item.cancelled && item.payment && !item.isCompleted && (
-                <button className="px-4 py-2 rounded-full bg-green-100 text-green-700">
-                  Paid
-                </button>
-              )}
+              {/* ================= NEW : CONSULT BUTTONS ================= */}
+              {/* ================= CONSULT BUTTONS ================= */}
+{!item.cancelled && item.payment && !item.isCompleted && (
+  <div className="flex flex-col gap-2">
+    <button className="px-4 py-2 rounded-full bg-green-100 text-green-700">
+      Paid
+    </button>
+
+    {/* OPEN CHAT */}
+    <button
+      onClick={() =>
+        navigate(
+          `/consult/${item._id}?role=patient&id=${localStorage.getItem("userId")}`
+        )
+      }
+      className="px-4 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600"
+    >
+      Open Chat
+    </button>
+
+    {/* JOIN CALL */}
+    <button
+      onClick={() =>
+        navigate(
+          `/consult/${item._id}?role=patient&id=${localStorage.getItem("userId")}&call=true`
+        )
+      }
+      className="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600"
+    >
+      Join Call
+    </button>
+  </div>
+)}
 
               {/* Pay + Cancel */}
               {!item.cancelled && !item.payment && !item.isCompleted && (
@@ -187,13 +221,59 @@ function MyAppointments() {
               )}
 
               {/* Cancelled */}
-              {item.cancelled && !item.isCompleted  && (
+              {item.cancelled && !item.isCompleted && (
                 <button className="px-4 py-2 rounded-full bg-red-100 text-red-600">
                   Appointment Cancelled
                 </button>
               )}
-              {item.isCompleted && <button>Completed</button>}
+              {item.isCompleted && (
+  <button className="px-4 py-2 rounded-full bg-emerald-600 text-white font-medium shadow-sm cursor-default">
+    Completed
+  </button>
+)}
+{(() => {
+  if (item.cancelled || item.payment || item.isCompleted) return null;
+  if (!item.slotDate || !item.slotTime) return null;
 
+  // ---- parse DD_MM_YYYY ----
+  const [day, month, year] = item.slotDate.split("_");
+
+  // ---- parse time (works for 9:30 PM & 21:30) ----
+  let hours = 0;
+  let minutes = 0;
+
+  if (item.slotTime.toLowerCase().includes("am") || item.slotTime.toLowerCase().includes("pm")) {
+    const [time, modifier] = item.slotTime.split(" ");
+    let [h, m] = time.split(":");
+    hours = parseInt(h);
+    minutes = parseInt(m);
+
+    if (modifier.toLowerCase() === "pm" && hours !== 12) hours += 12;
+    if (modifier.toLowerCase() === "am" && hours === 12) hours = 0;
+  } else {
+    const [h, m] = item.slotTime.split(":");
+    hours = parseInt(h);
+    minutes = parseInt(m);
+  }
+
+  const appointmentDateTime = new Date(year, month - 1, day, hours, minutes);
+  const now = new Date();
+
+  // optional realistic buffer (5 min)
+  const GRACE = 5 * 60 * 1000;
+
+  const isMissedUnpaid = now.getTime() >= appointmentDateTime.getTime() + GRACE;
+
+  if (isMissedUnpaid) {
+    return (
+      <button className="px-4 py-2 rounded-full bg-orange-500 text-white cursor-default">
+        Visited Offline
+      </button>
+    );
+  }
+
+  return null;
+})()}
             </div>
           </div>
         ))}

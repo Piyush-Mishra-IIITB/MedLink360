@@ -13,6 +13,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from "react-toastify";
 import Policy from "./components/Policy";
 import AiConsult from "./pages/AiConsult";
+import Consultation from "./pages/Consultation"
 function App() {
   return (
     <div>
@@ -31,6 +32,8 @@ function App() {
       <Route path="/Policy" element={<Policy/>}/>
 
 <Route path="/ai-consult" element={<AiConsult />} />
+// new
+<Route path="/consult/:appointmentId" element={<Consultation />} />
     </Routes>
     <Footer/>
     </div>
