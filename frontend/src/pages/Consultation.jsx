@@ -214,19 +214,7 @@ useEffect(() => {
 
     
 
-    // ===== CHAT HISTORY =====
-    socket.on("chat-history", (history) => {
-      const formatted = history.map((m) => ({
-        from: m.sender,
-        message: m.text,
-      }));
-      setMessages(formatted);
-      setCanChat(true);
-    });
-
-    socket.on("chat-message", (msg) => {
-      setMessages((prev) => [...prev, msg]);
-    });
+   
 // call blocked 
 socket.off("call-blocked");
 
@@ -300,8 +288,6 @@ socket.on("call-blocked", ({ reason }) => {
 
     return () => {
       socket.off("room-ready");
-      socket.off("chat-history");
-      socket.off("chat-message");
       socket.off("webrtc-offer");
       socket.off("webrtc-answer");
       socket.off("webrtc-ice-candidate");
