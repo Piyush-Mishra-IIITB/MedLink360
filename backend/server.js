@@ -35,6 +35,7 @@ app.use("/api/user", userRouter);
 app.use("/api", recommendRouter);
 
 const server = http.createServer(app);
+const consultationRooms = new Map();
 
 const io = new Server(server, {
   cors: {
@@ -86,70 +87,68 @@ socket.on("doctor-online", ({ token }) => {
   // JOIN ROOM
   // ======================================================
   socket.on("join-room", async (data) => {
-    try {
-      if (!data?.appointmentId || !data?.token) return;
+  try {
+    if (!data?.appointmentId || !data?.token) return;
 
-      const { appointmentId, token } = data;
+    const { appointmentId, token } = data;
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const role = decoded.role === "doctor" ? "doctor" : "patient";
-      const userId = decoded.id;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const role = decoded.role === "doctor" ? "doctor" : "patient";
+    const userId = decoded.id;
 
-      const appt = await appointmentModel.findById(appointmentId);
-      if (!appt) return;
+    const appt = await appointmentModel.findById(appointmentId);
+    if (!appt) return;
 
-      if (
-        (role === "doctor" && appt.docId.toString() !== userId) ||
-        (role === "patient" && appt.userId.toString() !== userId)
-      ) {
-        console.log("❌ Unauthorized room join blocked");
-        return;
-      }
-
-      // attach identity to socket (important)
-      socket.join(appointmentId);
-      socket.appointmentId = appointmentId;
-      socket.role = role;
-      socket.userId = userId;
-
-      console.log(`✅ ${role} joined room ${appointmentId}`);
-
-      // notify other peer
-socket.to(appointmentId).emit("peer-joined", { role });
-
-// authoritative room state
-const clients = await io.in(appointmentId).fetchSockets();
-const peerReady = clients.length === 2;
-
-// send state ONLY to joining user (CRITICAL)
-socket.emit("room-state", { peerReady });
-
-// realtime event for both users
-if (peerReady) {
-  io.to(appointmentId).emit("room-ready");
-}
-
-      // chat history
-      const oldMessages = await messageModel
-        .find({ appointmentId })
-        .sort({ createdAt: 1 });
-
-      socket.emit("chat-history", oldMessages);
-
-      await messageModel.updateMany(
-        { appointmentId, sender: { $ne: role }, seen: false },
-        { seen: true }
-      );
-
-      if (role === "doctor")
-        await appointmentModel.findByIdAndUpdate(appointmentId, { doctorUnreadCount: 0 });
-      else
-        await appointmentModel.findByIdAndUpdate(appointmentId, { patientUnreadCount: 0 });
-
-    } catch (err) {
-      console.log("Join error:", err.message);
+    if (
+      (role === "doctor" && appt.docId.toString() !== userId) ||
+      (role === "patient" && appt.userId.toString() !== userId)
+    ) {
+      console.log("❌ Unauthorized room join blocked");
+      return;
     }
-  });
+
+    // ================= ROOM JOIN =================
+    socket.join(appointmentId);
+    socket.appointmentId = appointmentId;
+    socket.role = role;
+    socket.userId = userId;
+
+    // ================= AUTHORITATIVE PRESENCE =================
+    if (!consultationRooms.has(appointmentId)) {
+      consultationRooms.set(appointmentId, { doctor: null, patient: null });
+    }
+
+    const room = consultationRooms.get(appointmentId);
+    room[role] = socket.id;
+
+    const peerReady = room.doctor && room.patient;
+
+    io.to(appointmentId).emit("room-ready", { peerReady: !!peerReady });
+
+    console.log("ROOM STATE:", appointmentId, room);
+
+    // ================= CHAT HISTORY =================
+    const oldMessages = await messageModel
+      .find({ appointmentId })
+      .sort({ createdAt: 1 });
+
+    socket.emit("chat-history", oldMessages);
+
+    // ================= READ RECEIPTS (KEEP THIS) =================
+    await messageModel.updateMany(
+      { appointmentId, sender: { $ne: role }, seen: false },
+      { seen: true }
+    );
+
+    if (role === "doctor")
+      await appointmentModel.findByIdAndUpdate(appointmentId, { doctorUnreadCount: 0 });
+    else
+      await appointmentModel.findByIdAndUpdate(appointmentId, { patientUnreadCount: 0 });
+
+  } catch (err) {
+    console.log("Join error:", err.message);
+  }
+});
 
   // ======================================================
 // APPOINTMENT TIME GUARD
@@ -274,29 +273,23 @@ socket.on("webrtc-end-call", () => {
   // ======================================================
   // DISCONNECT
   // ======================================================
- socket.on("disconnect", () => {
+socket.on("disconnect", () => {
 
-  // ================= DOCTOR PRESENCE =================
-  if (socket.role === "doctor" && onlineDoctors.has(socket.userId)) {
+  if (socket.appointmentId && consultationRooms.has(socket.appointmentId)) {
 
-    const sockets = onlineDoctors.get(socket.userId);
-    sockets.delete(socket.id);
+    const room = consultationRooms.get(socket.appointmentId);
 
-    // remove doctor only if ALL tabs closed
-    if (sockets.size === 0) {
-      onlineDoctors.delete(socket.userId);
-      console.log("🔴 Doctor offline:", socket.userId);
-    }
-  }
+    if (room.doctor === socket.id) room.doctor = null;
+    if (room.patient === socket.id) room.patient = null;
 
-  // ================= CALL TERMINATION =================
-  if (socket.appointmentId) {
+    const peerReady = room.doctor && room.patient;
 
-    socket.to(socket.appointmentId).emit("webrtc-end-call", {
-      reason: "disconnect"
-    });
+    io.to(socket.appointmentId).emit("room-ready", { peerReady: !!peerReady });
 
-    console.log(`❌ ${socket.role || "unknown"} disconnected from ${socket.appointmentId}`);
+    if (!room.doctor && !room.patient)
+      consultationRooms.delete(socket.appointmentId);
+
+    console.log("ROOM UPDATED AFTER DISCONNECT:", socket.appointmentId, room);
   }
 
 });
