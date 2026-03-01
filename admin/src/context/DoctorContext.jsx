@@ -183,6 +183,7 @@ const DoctorContextProvider = ({ children }) => {
     getDashData,
 
     profileData,
+    setProfileData,
     getProfileData,
 
     unreadChats,
