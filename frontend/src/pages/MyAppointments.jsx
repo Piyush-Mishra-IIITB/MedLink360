@@ -31,6 +31,16 @@ function MyAppointments() {
     return `${dateArray[0]} ${months[Number(dateArray[1])]} ${dateArray[2]}`;
   };
 
+  // openconsl
+  const openConsult = (appointmentId, call = false) => {
+  const base = import.meta.env.VITE_FRONTEND_URL;
+
+  const url =
+    `${base}/consult/${appointmentId}?role=patient&id=${localStorage.getItem("userId")}` +
+    (call ? "&call=true" : "");
+
+  window.open(url, "_blank");
+};
   // ================= GET APPOINTMENTS =================
   const getUserAppointment = async () => {
     try {
@@ -177,27 +187,19 @@ function MyAppointments() {
 
     {/* OPEN CHAT */}
     <button
-      onClick={() =>
-        navigate(
-          `/consult/${item._id}?role=patient&id=${localStorage.getItem("userId")}`
-        )
-      }
-      className="px-4 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600"
-    >
-      Open Chat
-    </button>
+  onClick={() => openConsult(item._id, false)}
+  className="px-4 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600"
+>
+  Open Chat
+</button>
 
-    {/* JOIN CALL */}
-    <button
-      onClick={() =>
-        navigate(
-          `/consult/${item._id}?role=patient&id=${localStorage.getItem("userId")}&call=true`
-        )
-      }
-      className="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600"
-    >
-      Join Call
-    </button>
+<button
+  onClick={() => openConsult(item._id, true)}
+  className="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600"
+>
+  Join Call
+</button>
+    
   </div>
 )}
 
