@@ -31,11 +31,16 @@ const [camOn, setCamOn] = useState(true);
   socketRef.current = socket;
 
   // ---------- LISTENERS FIRST ----------
-  socket.on("room-ready", () => {
-    console.log("ROOM READY RECEIVED");
-    setPeerReady(true);
+ socket.on("room-ready", ({ peerReady }) => {
+  console.log("ROOM STATE:", peerReady);
+
+  setPeerReady(peerReady);
+
+  if (peerReady)
     setStatus("Doctor available");
-  });
+  else
+    setStatus("Waiting for doctor...");
+});
 
   socket.on("chat-history", (history) => {
     const formatted = history.map((m) => ({
@@ -207,10 +212,7 @@ useEffect(() => {
 
 
 
-    socket.on("room-ready", () => {
-      setPeerReady(true);
-      setStatus("Doctor available");
-    });
+    
 
     // ===== CHAT HISTORY =====
     socket.on("chat-history", (history) => {
